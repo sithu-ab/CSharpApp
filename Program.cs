@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using System.Globalization;
 using ChoETL;
 
 namespace CSharpApp
@@ -9,19 +10,24 @@ namespace CSharpApp
         {
             Console.WriteLine("Hello C#!");
 
-            CsvReader();
+            // 1.
+            DataTable df = ReadCSV();
+            // 2.
+            GroupBy(df);
         }
 
-        static void CsvReader()
+
+        static DataTable ReadCSV()
         {
+            Console.WriteLine("-----");
+
             var input_file = "./input/感+プ_07月_千葉県_異常除去済_2_534040_233.csv"; // 入力ファイル
             Console.WriteLine(input_file);
 
             var p = new ChoCSVReader(input_file).WithFirstLineHeader();
             var df = p.AsDataTable();
 
-            Console.WriteLine(df.Columns[0]);
-            Console.WriteLine("-----");
+            // Console.WriteLine(df.Columns[0]);
 
             // foreach(DataColumn column in df.Columns)
             // {
@@ -32,7 +38,14 @@ namespace CSharpApp
             //     }
             // }
 
+            return df;
+        }
+
+        static IDictionary<string, List<object>> GroupBy(DataTable df)
+        {
             Console.WriteLine("-----");
+
+            IDictionary<string, List<object>> dict = new Dictionary<string, List<object>>();
 
             foreach(DataRow row in df.Rows) {
                 // [データの前処理]ID01旅行時間の”8191”をnullに置換(該当行は消さない)
@@ -45,10 +58,27 @@ namespace CSharpApp
                 // 日付追加
                 // df["日付"] = pd.to_datetime(df["送信時刻"]).dt.date
                 // 送信時刻 = row[0]
-                DateTime dt = DateTime.ParseExact(Convert.ToString(row[0]),  "yyyy/M/d H:mm", System.Globalization.CultureInfo.InvariantCulture);
-                row[0] = dt;
+                DateTime transmissionTime = DateTime.ParseExact(Convert.ToString(row[0]),  "yyyy/M/d H:mm", CultureInfo.InvariantCulture); // df["日付"] = pd.to_datetime(df["送信時刻"]).dt.date
+                row[0] = transmissionTime;
+
+                var key = row[1] + "-" + transmissionTime.Year + transmissionTime.Month + transmissionTime.Day;
+                if (!dict.ContainsKey(key)) {
+                    dict[key] = new List<object>();
+                }
+
+                dict[key].Add(row);
+
                 Console.WriteLine(row[0]);
             }
+
+            Console.WriteLine("Aggregate: " + dict.Count);
+
+            foreach(var item in dict) {
+                Console.WriteLine("group: " + item.Key);
+                Console.WriteLine("df_g: " + item.Value.Count);
+            }
+
+            return dict;
         }
     }
 }
