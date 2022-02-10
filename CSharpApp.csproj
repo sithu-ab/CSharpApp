@@ -9,6 +9,9 @@
 
   <ItemGroup>
     <PackageReference Include="ChoETL" Version="1.2.1.42" />
+    <PackageReference Include="Deedle" Version="2.5.0" />
+    <PackageReference Include="Numpy" Version="3.7.1.28" />
+    <PackageReference Include="Pandas.NET" Version="0.3.0" />
   </ItemGroup>
 
 </Project>
