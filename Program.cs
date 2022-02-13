@@ -2,20 +2,19 @@
 using System.Globalization;
 using ChoETL;
 using Deedle;
-using Tensorflow;
 using pd = PandasNet;
 
 namespace CSharpApp
 {
     class Program
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
             Console.WriteLine("Hello C#!");
 
             var input_file = "./input/感+プ_07月_千葉県_異常除去済_2_534040_233.csv"; // 入力ファイル
 
-            DataTable tbl = ReadCSV(input_file);
+            var tbl = ReadCsv(input_file);
             var (group, df) = GroupBy(tbl);
 
             Console.WriteLine(group);
@@ -24,8 +23,8 @@ namespace CSharpApp
             foreach (KeyValuePair<string, List<object>> gp in group)
             {
                 Console.WriteLine(gp.Key);
-                Console.WriteLine(df[gp.Key][4].Select(p => Convert.ToInt32(p)).Min());
-                Console.WriteLine(df[gp.Key][4].Select(p => Convert.ToInt32(p)).Max());
+                var x = MinMaxScale(df[gp.Key][4]);
+                Console.WriteLine(x[0]);
             }
 
             // ReadCsvIntoDeedleDataFrame(input_file);
@@ -45,7 +44,7 @@ namespace CSharpApp
         /**
          * Read CSV content using ChoELT library
          */
-        static DataTable ReadCSV(string input_file)
+        private static DataTable ReadCsv(string input_file)
         {
             Console.WriteLine("-----");
             Console.WriteLine(input_file);
@@ -68,24 +67,9 @@ namespace CSharpApp
         }
 
         /**
-         * Create Pandas DataFrame from DataTable
-         */
-        static pd.DataFrame CreateDataFrameFromDataTable(DataTable tbl)
-        {
-            var rows = new List<PandasNet.Series>();
-
-            foreach (DataRow row in tbl.Rows)
-            {
-                rows.Add(new pd.Series(row.ItemArray.Select(p => p.ToString()).ToArray()));
-            }
-
-            return new pd.DataFrame(rows);
-        }
-
-        /**
          * Create custom Series
          */
-        static List<List<object>> CreateEmptySeries(int columnCount)
+        private static List<List<object>> CreateEmptySeries(int columnCount)
         {
             var customFrame = new List<List<object>>();
             for (var c = 0; c < columnCount; c++)
@@ -98,7 +82,7 @@ namespace CSharpApp
         /**
          * Group by data from DataTable using IDictionary
          */
-        static (IDictionary<string, List<object>>, IDictionary<string, List<List<object>>>) GroupBy(DataTable tbl)
+        private static (IDictionary<string, List<object>>, IDictionary<string, List<List<object>>>) GroupBy(DataTable tbl)
         {
             IDictionary<string, List<object>> dict = new Dictionary<string, List<object>>();
             IDictionary<string, List<List<object>>> frames = new Dictionary<string, List<List<object>>>();
@@ -203,10 +187,43 @@ namespace CSharpApp
             return (dict, frames);
         }
 
+        private static List<double> MinMaxScale(List<object> x, int from = 0, int to = 1)
+        {
+            var min = x.Select(p => Convert.ToInt32(p)).Min();
+            var max = x.Select(p => Convert.ToInt32(p)).Max();
+            var xScaled = new List<double>();
+            Console.WriteLine(min);
+            Console.WriteLine(max);
+
+            var em = x.GetEnumerator();
+            while (em.MoveNext())
+            {
+                var xStd = (Convert.ToInt32(em.Current) - min * 1.0) / (max - min);
+                xScaled.Add(xStd * (to - from) + from);
+            }
+
+            return xScaled;
+        }
+
+        /**
+         * Create Pandas DataFrame from DataTable
+         */
+        private static pd.DataFrame CreateDataFrameFromDataTable(DataTable tbl)
+        {
+            var rows = new List<PandasNet.Series>();
+
+            foreach (DataRow row in tbl.Rows)
+            {
+                rows.Add(new pd.Series(row.ItemArray.Select(p => p.ToString()).ToArray()));
+            }
+
+            return new pd.DataFrame(rows);
+        }
+
         /**
          * Read CSV into DataFrame using Deedle library
          */
-        static void ReadCsvIntoDeedleDataFrame(string input_file)
+        private static void ReadCsvIntoDeedleDataFrame(string input_file)
         {
             var df = Frame.ReadCsv(input_file);
 
