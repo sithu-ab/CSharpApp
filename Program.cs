@@ -2,6 +2,7 @@
 using System.Globalization;
 using ChoETL;
 using Deedle;
+using NumSharp;
 using pd = PandasNet;
 
 namespace CSharpApp
@@ -26,6 +27,12 @@ namespace CSharpApp
                 var x = MinMaxScale(df[gp.Key][4]);
                 Console.WriteLine(x[0]);
             }
+
+            var dt = 0.05;
+            var t = np.linspace(1, 288, 288) * dt - dt;
+
+            var window = Hanning(5);
+            PrintNdArray(window);
 
             // ReadCsvIntoDeedleDataFrame(input_file);
 
@@ -203,6 +210,19 @@ namespace CSharpApp
             }
 
             return xScaled;
+        }
+
+        private static NDArray Hanning(int length)
+        {
+            return 0.5 - (0.5 * np.cos(2 * np.pi / length * np.arange(length)));
+        }
+
+        private static void PrintNdArray(NDArray arr)
+        {
+            foreach (var val in arr)
+            {
+                Console.WriteLine(val);
+            }
         }
 
         /**
