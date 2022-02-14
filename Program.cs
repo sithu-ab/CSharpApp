@@ -2,8 +2,10 @@
 using System.Globalization;
 using ChoETL;
 using Deedle;
-using NumSharp;
+using Numpy;
 using pd = PandasNet;
+using Python.Included;
+using Python.Runtime;
 
 namespace CSharpApp
 {
@@ -13,26 +15,31 @@ namespace CSharpApp
         {
             Console.WriteLine("Hello C#!");
 
+            Installer.SetupPython().Wait();
+            Installer.InstallWheel(typeof(np).Assembly, "numpy-1.16.3-cp37-cp37m-win_amd64.whl").Wait();
+            PythonEngine.Initialize();
+            var npp = Py.Import("numpy");
+
             var input_file = "./input/感+プ_07月_千葉県_異常除去済_2_534040_233.csv"; // 入力ファイル
 
-            var tbl = ReadCsv(input_file);
-            var (group, df) = GroupBy(tbl);
+            // var tbl = ReadCsv(input_file);
+            // var (group, df) = GroupBy(tbl);
+            //
+            // Console.WriteLine(group);
+            // Console.WriteLine(df);
+            //
+            // foreach (KeyValuePair<string, List<object>> gp in group)
+            // {
+            //     Console.WriteLine(gp.Key);
+            //     var x = MinMaxScale(df[gp.Key][4]);
+            //     Console.WriteLine(x[0]);
+            // }
+            //
+            // var dt = 0.05;
+            // var t = np.linspace(1, 288, 288) * dt - dt;
 
-            Console.WriteLine(group);
-            Console.WriteLine(df);
-
-            foreach (KeyValuePair<string, List<object>> gp in group)
-            {
-                Console.WriteLine(gp.Key);
-                var x = MinMaxScale(df[gp.Key][4]);
-                Console.WriteLine(x[0]);
-            }
-
-            var dt = 0.05;
-            var t = np.linspace(1, 288, 288) * dt - dt;
-
-            var window = Hanning(5);
-            PrintNdArray(window);
+            // var window = Hanning(5);
+            // PrintNdArray(window);
 
             // ReadCsvIntoDeedleDataFrame(input_file);
 
@@ -212,18 +219,18 @@ namespace CSharpApp
             return xScaled;
         }
 
-        private static NDArray Hanning(int length)
-        {
-            return 0.5 - (0.5 * np.cos(2 * np.pi / length * np.arange(length)));
-        }
-
-        private static void PrintNdArray(NDArray arr)
-        {
-            foreach (var val in arr)
-            {
-                Console.WriteLine(val);
-            }
-        }
+        // private static NDArray Hanning(int length)
+        // {
+        //     return 0.5 - (0.5 * np.cos(2 * np.pi / length * np.arange(length)));
+        // }
+        //
+        // private static void PrintNdArray(NDArray arr)
+        // {
+        //     foreach (var val in arr)
+        //     {
+        //         Console.WriteLine(val);
+        //     }
+        // }
 
         /**
          * Create Pandas DataFrame from DataTable
@@ -254,3 +261,4 @@ namespace CSharpApp
         }
     }
 }
+
